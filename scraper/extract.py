@@ -1,0 +1,54 @@
+import requests
+from dotenv import load_dotenv
+import os
+import pandas as pd
+
+load_dotenv()
+
+job_keyword = "Data Engineer"
+job_keywords = ["Data Enginner", "Data Analyst", "Backend Developer"]
+results_per_page = 5
+job_location = "Vienna"
+
+adzuna_id_secret = os.environ.get("ADZUNA_ID")
+adzuna_api_secret = os.environ.get("ADZUNA_API")
+
+base_url = 'https://api.adzuna.com/v1/api/jobs/at/search/1'
+
+payload = {
+    "app_id": adzuna_id_secret,
+    "app_key": adzuna_api_secret,
+    "results_per_page": results_per_page,
+    "what": job_keyword,
+    "where": job_location
+}
+
+r = requests.get(base_url, params=payload)
+#r = requests.get('https://api.adzuna.com/v1/api/jobs/at/search/1?app_id={0}&app_key={1}&results_per_page={2}&what={3}&where={4}'.format(adzuna_id_secret, adzuna_api_secret, results_per_page,job_keyword,job_location))
+
+#print(r.text)
+
+data = r.json()
+
+titles = []
+companies = []
+job_descriptions = []
+locations = []
+dates = []
+
+
+
+for job in data["results"]:
+    titles.append(job["title"])
+    companies.append(job["company"]["display_name"])
+
+print(titles)
+print(companies)
+
+dataset = {
+    "job_title":titles,
+    "company_name": companies
+}
+
+df = pd.DataFrame(dataset)
+print(df)
