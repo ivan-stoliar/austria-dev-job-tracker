@@ -51,32 +51,33 @@ def extract_jobs():
         if skill in str(lowered_job_description):
             found_skills.append(skill)
 
-    print(lowered_job_description)
+    # print(lowered_job_description)
     # print(lowered_job_description[0])
-    print(found_skills)
+    # print(found_skills)
 
-    # titles = []
-    # companies = []
-    # job_descriptions = []
-    # locations = []
-    # dates = []
+    titles = []
+    companies = []
+    job_descriptions = []
+    locations = []
+    dates = []
 
 
 
-    # for job in data["results"]:
-    #     titles.append(job["title"])
-    #     companies.append(job["company"]["display_name"])
+    for job in data["results"]:
+        titles.append(job["title"])
+        companies.append(job["company"]["display_name"])
+
 
     # print(titles)
     # print(companies)
 
-    # dataset = {
-    #     "job_title":titles,
-    #     "company_name": companies
-    # }
+    dataset = {
+        "job_title":titles,
+        "company_name": companies
+    }
 
-    # df = pd.DataFrame(dataset)
-    # print(df)
+    df = pd.DataFrame(dataset)
+    print(df)
 
 if __name__ == "__main__":
     extract_jobs()
