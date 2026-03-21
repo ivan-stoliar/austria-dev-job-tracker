@@ -2,11 +2,31 @@ import requests
 from dotenv import load_dotenv
 import os
 import pandas as pd
+import json
 
+load_dotenv()
+
+def extract_job_adzuna():
+
+    pass
+
+def extract_job_jooble():
+
+    pass
+
+def extract_job_arbeitnow():
+
+    base_url = 'https://arbeitnow.com/api/job-board-api'
+    r = requests.get(base_url)
+    data = r.json()
+    jobs_list = data['data']
+
+    with open("arbeitnow_raw.json", "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=4, ensure_ascii=False)
 
 def extract_jobs():
 
-    load_dotenv()
+
 
     job_keyword = "Data Engineer"
     job_keywords = ["Data Enginner", "Data Analyst", "Backend Developer"]
@@ -79,5 +99,7 @@ def extract_jobs():
     df = pd.DataFrame(dataset)
     print(df)
 
+
 if __name__ == "__main__":
-    extract_jobs()
+    # extract_jobs()
+    extract_job_arbeitnow()
