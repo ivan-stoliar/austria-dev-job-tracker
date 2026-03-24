@@ -17,7 +17,6 @@ adzuna_id_secret = os.environ["ADZUNA_ID"]
 adzuna_api_secret = os.environ["ADZUNA_API"]
 jooble_api_secret = os.environ["JOOBLE_API"]
 
-
 @retry(
     stop=stop_after_attempt(4),
     wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -77,7 +76,6 @@ def extract_job_adzuna():
 
     seen_adzuna_ids = set()
 
-    # all_adzuna_jobs = []
     with requests.Session() as session:
         for role in job_keywords:
             page = 1
@@ -157,47 +155,76 @@ def extract_job_jooble():
     url = f"https://jooble.org/api/{jooble_api_secret}"
 
     job_keywords = ["Data Engineer", "Data", "Backend", "Cloud", "Devops"]
+    target_country = "austria"
     MAX_PAGES = 10
 
-    all_jooble_jobs = []
+    seen_jooble_ids = set()
 
-    for role in job_keywords:
-        page = 1
-        while page <= MAX_PAGES:
-            logging.info(f"Fetching Jooble: {role} - Page {page}...")
 
-            payload = {
-                "keywords": role,
-                "location": "Austria",
-                "page": str(page)
-            }
+    with requests.Session() as session:
+        for role in job_keywords:
+            page = 1
+            keyword_jobs = []
+            while page <= MAX_PAGES:
+                logging.info(f"Fetching Jooble: {role} - Page {page}...")
 
-            try:
-                r = fetch_data_with_retry(url, payload=payload, is_post=True)
+                payload = {
+                    "keywords": role,
+                    "location": "Austria",
+                    "page": str(page)
+                }
 
-            except requests.exceptions.RequestException as e:
-                logging.error(f"FATAL: Jooble API totally failed on {role} page {page} after 4 attempts.")
-                logging.error(f"Error details: {e}")
-                break
+                try:
+                    r = fetch_data_with_retry(session, url, payload=payload, is_post=True)
 
-            data = r.json().get('jobs', [])
+                except requests.exceptions.RequestException as e:
+                    logging.error(f"FATAL: Jooble API totally failed on {role} page {page} after 4 attempts.")
+                    logging.error(f"Error details: {e}")
+                    break
 
-            if not data:
-                logging.info(f"End of Jooble jobs for {role} reached at page {page}.")
-                break
+                data = r.json().get('jobs', [])
 
-            all_jooble_jobs.extend(data)
+                if not data:
+                    logging.info(f"End of Jooble jobs for {role} reached at page {page}.")
+                    break
+                duplicates_prevented = 0
 
-            page += 1
+                for job in data:
 
-            time.sleep(5)
+                    job_id = str(job.get("id"))
 
-    if all_jooble_jobs:
-        save_raw_json(all_jooble_jobs, "jooble")
-        logging.info(f"Extraction complete! Saved {len(all_jooble_jobs)} Jooble jobs.")
-    else:
-        logging.warning("No jobs were found today across any keywords.")
+                    if job_id and job_id not in seen_jooble_ids:
+                        seen_jooble_ids.add(job_id)
+                        keyword_jobs.append(job)
+                    else:
+                        duplicates_prevented += 1
 
+                if duplicates_prevented > 0:
+                    logging.info(f"Skipped {duplicates_prevented} duplicate jobs on this page.")
+
+                logging.info(f"Accumulated {len(keyword_jobs)} total {role} jobs so far...")
+
+                page += 1
+
+                time.sleep(5)
+
+        if keyword_jobs:
+
+                wrapped_payload = {
+                    "extracted_at": datetime.now().isoformat(),
+                    "source": "jooble",
+                    "country": target_country,
+                    "keyword": role,
+                    "total_records": len(keyword_jobs),
+                    "jobs": keyword_jobs
+                }
+
+                save_raw_json(wrapped_payload, "jooble", target_country, role)
+                logging.info(f"Extraction complete! Saved {len(keyword_jobs)} jobs for {role} to the file.")
+        else:
+                logging.warning("No jobs were found today across any keywords.")
+
+    logging.info(f"Jooble pipeline finished. Saved {len(seen_jooble_ids)} Jooble unique jobs today.")
 
 def extract_job_arbeitnow():
 
