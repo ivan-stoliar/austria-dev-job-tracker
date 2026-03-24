@@ -24,15 +24,15 @@ jooble_api_secret = os.environ["JOOBLE_API"]
     retry=retry_if_exception_type(requests.exceptions.RequestException)
 )
 
-def fetch_data_with_retry(url, payload=None, is_post=False):
+def fetch_data_with_retry(session, url, payload=None, is_post=False):
     """
     A network request function that automatically retries on failure.
     """
 
     if is_post:
-        response = requests.post(url, json=payload, timeout=10)
+        response = session.post(url, json=payload, timeout=10)
     else:
-        response = requests.get(url, params=payload, timeout=10)
+        response = session.get(url, params=payload, timeout=10)
 
     response.raise_for_status()
 
@@ -75,62 +75,77 @@ def extract_job_adzuna():
     target_country = "austria"
     MAX_PAGES = 10
 
+    seen_adzuna_ids = set()
+
     # all_adzuna_jobs = []
+    with requests.Session() as session:
+        for role in job_keywords:
+            page = 1
+            keyword_jobs = []
 
-    for role in job_keywords:
-        page = 1
-        keyword_jobs = []
+            while page <= MAX_PAGES:
+                logging.info(f"Fetching {role} - Page {page}...")
 
-        while page <= MAX_PAGES:
-            logging.info(f"Fetching {role} - Page {page}...")
+                payload = {
+                    "app_id": adzuna_id_secret,
+                    "app_key": adzuna_api_secret,
+                    "results_per_page": 50,
+                    "what": role
+                }
 
-            payload = {
-                "app_id": adzuna_id_secret,
-                "app_key": adzuna_api_secret,
-                "results_per_page": 50,
-                "what": role
-            }
+                url = f'https://api.adzuna.com/v1/api/jobs/at/search/{page}'
 
-            url = f'https://api.adzuna.com/v1/api/jobs/at/search/{page}'
+                try:
+                    r = fetch_data_with_retry(session, url, payload=payload, is_post=False)
 
-            try:
-                r = fetch_data_with_retry(url, payload=payload, is_post=False)
+                except requests.exceptions.RequestException as e:
+                    logging.error(f"FATAL: Adzuna API totally failed on {role} page {page} after 4 attempts.")
+                    logging.error(f"Error details: {e}")
+                    break
 
-            except requests.exceptions.RequestException as e:
-                logging.error(f"FATAL: Adzuna API totally failed on {role} page {page} after 4 attempts.")
-                logging.error(f"Error details: {e}")
-                break
+                data = r.json().get('results', [])
 
-            data = r.json().get('results', [])
+                if not data:
+                    logging.info(f"End of jobs for {role} reached at page {page}.")
+                    break
 
-            if not data:
-                logging.info(f"End of jobs for {role} reached at page {page}.")
-                break
+                duplicates_prevented = 0
+                for job in data:
 
-            keyword_jobs.extend(data)
+                    job_id = str(job.get("id"))
 
-            logging.info(f"Accumulated {len(keyword_jobs)} total {role} jobs so far...")
+                    if job_id and job_id not in seen_adzuna_ids:
+                        seen_adzuna_ids.add(job_id)
+                        keyword_jobs.append(job)
+                    else:
+                        duplicates_prevented += 1
 
-            page += 1
+                if duplicates_prevented > 0:
+                    logging.info(f"Skipped {duplicates_prevented} duplicate jobs on this page.")
 
-            time.sleep(5)
+                logging.info(f"Accumulated {len(keyword_jobs)} total {role} jobs so far...")
 
-        if keyword_jobs:
+                page += 1
 
-            wrapped_payload = {
-                "extracted_at": datetime.now().isoformat(),
-                "source": "adzuna",
-                "country": target_country,
-                "keyword": role,
-                "total_records": len(keyword_jobs),
-                "jobs": keyword_jobs # The raw API data goes inside this key
-            }
+                time.sleep(5)
 
-            save_raw_json(wrapped_payload, "adzuna", target_country, role)
-            logging.info(f"Extraction complete! Saved {len(keyword_jobs)} jobs for {role} to the file.")
-        else:
-            logging.warning("No jobs were found today across any keywords.")
+            if keyword_jobs:
 
+                wrapped_payload = {
+                    "extracted_at": datetime.now().isoformat(),
+                    "source": "adzuna",
+                    "country": target_country,
+                    "keyword": role,
+                    "total_records": len(keyword_jobs),
+                    "jobs": keyword_jobs
+                }
+
+                save_raw_json(wrapped_payload, "adzuna", target_country, role)
+                logging.info(f"Extraction complete! Saved {len(keyword_jobs)} jobs for {role} to the file.")
+            else:
+                logging.warning("No jobs were found today across any keywords.")
+
+    logging.info(f"Adzuna pipeline finished. Saved {len(seen_adzuna_ids)} Adzuna unique jobs today.")
 
 
 def extract_job_jooble():
