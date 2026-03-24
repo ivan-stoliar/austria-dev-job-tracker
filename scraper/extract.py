@@ -13,9 +13,9 @@ logging.basicConfig(
     )
 
 load_dotenv()
-adzuna_id_secret = os.environ["ADZUNA_ID"]
-adzuna_api_secret = os.environ["ADZUNA_API"]
-jooble_api_secret = os.environ["JOOBLE_API"]
+# adzuna_id_secret = os.environ["ADZUNA_ID"]
+# adzuna_api_secret = os.environ["ADZUNA_API"]
+# jooble_api_secret = os.environ["JOOBLE_API"]
 
 @retry(
     stop=stop_after_attempt(4),
@@ -233,21 +233,85 @@ def extract_job_arbeitnow():
     """
 
     logging.info("Starting Arbeitnow extraction...")
-    url = "https://www.arbeitnow.com/api/job-board-api"
-    r = requests.get(url, timeout=10)
 
-    if r.status_code == 200:
-        data = r.json().get('data', [])
-        save_raw_json(data, "arbeitnow")
-    else:
-        logging.error(f"Arbeitnow API failed with status code: {r.status_code}")
 
+    job_keywords = ["Data Engineer", "Data", "Backend", "Cloud", "Devops", "Engineer"]
+    target_country = "austria"
+    MAX_PAGES = 10
+
+    seen_arbeitnow_ids = set()
+
+    categorized_jobs = {keyword: [] for keyword in job_keywords}
+
+    with requests.Session() as session:
+        page = 1
+
+        while page <= MAX_PAGES:
+            logging.info(f"Scanning Arbeitnow - Page {page}...")
+
+            url = f"https://www.arbeitnow.com/api/job-board-api?page={page}"
+
+            try:
+                r = fetch_data_with_retry(session, url, is_post=False)
+            except requests.exceptions.RequestException as e:
+                logging.error(f"FATAL: Arbeitnow API failed on page {page}. Error: {e}")
+                break
+            
+            data = r.json().get('data', [])
+
+            if not data:
+                logging.info(f"End of Arbeitnow jobs reached at page {page}.")
+                break
+
+            duplicates_prevented = 0
+            jobs_matched = 0
+
+            for job in data:
+                job_id = str(job.get("slug"))
+
+                if job_id and job_id in seen_arbeitnow_ids:
+                    duplicates_prevented += 1
+                    continue
+
+                title = job.get("title", "").lower()
+
+                for keyword in job_keywords:
+                    
+                    if keyword.lower() in title:
+                        seen_arbeitnow_ids.add(job_id)
+                        categorized_jobs[keyword].append(job)
+                        jobs_matched += 1
+                        break 
+           
+            if duplicates_prevented > 0:
+                logging.info(f"Skipped {duplicates_prevented} duplicate jobs.")
+            logging.info(f"Found {jobs_matched} relevant tech jobs on Page {page}.")
+
+            page += 1
+            time.sleep(5) 
+
+        for keyword, jobs_list in categorized_jobs.items():
+            if jobs_list:
+                wrapped_payload = {
+                    "extracted_at": datetime.now().isoformat(),
+                    "source": "arbeitnow",
+                    "country": target_country,
+                    "keyword": keyword,
+                    "total_records": len(jobs_list),
+                    "jobs": jobs_list
+                }
+                save_raw_json(wrapped_payload, "arbeitnow", target_country, keyword)
+                logging.info(f"Extraction complete! Saved {len(jobs_list)} Arbeitnow jobs for {keyword}.")
+            else:
+                logging.warning(f"No Arbeitnow jobs found for {keyword} today.")
+
+    logging.info(f"Arbeitnow pipeline finished. Saved {len(seen_arbeitnow_ids)} Arbeitnow unique jobs today.")        
 
 if __name__ == "__main__":
     logging.info("Starting Daily Data Extraction Pipeline")
 
-    # extract_job_arbeitnow()
-    extract_job_adzuna()
+    extract_job_arbeitnow()
+    # extract_job_adzuna()
     # extract_job_jooble()
 
     logging.info("Pipeline Finished")
