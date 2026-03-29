@@ -7,12 +7,13 @@ from datetime import datetime
 import time
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
+load_dotenv()
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
     )
 
-load_dotenv()
 adzuna_id_secret = os.environ["ADZUNA_ID"]
 adzuna_api_secret = os.environ["ADZUNA_API"]
 jooble_api_secret = os.environ["JOOBLE_API"]
