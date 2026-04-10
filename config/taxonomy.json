@@ -1,28 +1,4 @@
 {
-  "seniority": {
-    "junior": ["\\bjunior\\b", "\\bjr\\.?\\b", "\\bentry[- ]level\\b", "\\bberufseinsteiger\\b", "\\babsolvent\\b"],
-    "middle": ["\\bmid[- ]level\\b", "\\bmedior\\b"],
-    "senior": ["\\bsenior\\b", "\\bsr\\.?\\b", "\\bexperienced\\b", "\\bprincipal\\b"],
-    "werkstudent": ["\\bwerkstudent\\b", "\\bworking student\\b"],
-    "internship": ["\\bpraktikum\\b", "\\bpraktikant\\b", "\\bintern\\b", "\\binternship\\b"],
-    "trainee": ["\\btrainee\\b", "\\btraineeship\\b"],
-    "lead": ["\\blead\\b"]
-  },
-  "language_requirements": {
-    "german_fluent": ["\\bmuttersprache\\b", "\\bverhandlungssicher\\b", "\\bc1\\b", "\\bc2\\b", "\\bfließend deutsch\\b", "\\bgerman.{0,15}required\\b"],
-    "german_basic": ["\\bb1\\b", "\\bb2\\b", "\\bgrundkenntnisse\\b", "\\bgerman.{0,15}plus\\b", "\\bgerman.{0,15}advantage\\b"],
-    "english_only": ["\\benglish only\\b", "\\bworking language.{0,10}english\\b"]
-  },
-  "work_model": {
-    "remote": ["\\bremote\\b", "\\bhome[- ]?office\\b", "\\bwork from home\\b", "\\b100% remote\\b"],
-    "hybrid": ["\\bhybrid\\b", "\\bteilweise homeoffice\\b", "\\bflexible working\\b"],
-    "office": ["\\bon[- ]?site\\b", "\\bvor ort\\b", "\\bin[- ]?office\\b", "\\bpräsenz\\b"]
-  },
-  "employment_type": {
-    "vollzeit": ["\\bvollzeit\\b", "\\bfull[- ]time\\b", "\\bfull time\\b"],
-    "teilzeit": ["\\bteilzeit\\b", "\\bpart[- ]time\\b", "\\bpart time\\b"],
-    "minijob": ["\\bminijob\\b", "\\b450[- ]euro\\b", "\\bgeringfügig\\b"]
-  },
   "tech_stack": {
     "python": ["\\bpython\\b", "\\bpython3\\b", "\\bpandas\\b"],
     "java": ["\\bjava\\b", "\\bjava 11\\b", "\\bjava 17\\b", "\\bjee\\b"],

@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: "The raw data ingestion layer from Python pipeline."
+    schema: bronze
+    tables:
+      - name: raw_jobs
+        description: "Raw JSON payloads scraped from job boards."
