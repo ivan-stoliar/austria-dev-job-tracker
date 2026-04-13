@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: dim_companies
+    columns:
+      - name: company_id
+        description: "Primary key for the company dimension (MD5 Hash)"
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_skills
+    columns:
+      - name: skill_id
+        description: "Primary key for the skill dimension (MD5 Hash)"
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_job_postings
+    columns:
+      - name: job_id
+        description: "Primary key for the job posting"
+        tests:
+          - unique
+          - not_null
+      - name: company_id
+        description: "Foreign key to dim_companies"
+        tests:
+          - not_null
