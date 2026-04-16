@@ -20,3 +20,7 @@ job_tracker_dbt/logs/
 
 # Documentation Assets
 assets/
+
+# BI Assets
+powebi_dashboard/
+*.pbix

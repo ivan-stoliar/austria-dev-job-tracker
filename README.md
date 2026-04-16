@@ -1,8 +1,18 @@
 # Austrian Tech Job Market: End-to-End ELT Pipeline & Dashboard
 
+## 📸 Dashboard Showcase
+
 ![Power BI Austrian Job Dashboard](assets/dashboard.png)
 
 *Dashboard updated via containerized pipeline.*
+
+
+### 🎬 Interactive Demo
+
+![Dashboard Interaction Demo](assets/dashboard_demo.gif)
+
+*Live Power BI dashboard demonstrating dynamic cross-filtering by role, connected to the Gold Layer Star Schema.*
+
 
 ## 📊 Executive Summary
 Built specifically to analyze the Austrian tech hiring market as a demonstration of production-grade data engineering applied to a real local business problem. 
