@@ -4,6 +4,9 @@ SELECT
 
     TO_CHAR(job_posted_at_utc, 'YYYYMMDD')::INT AS date_id,
 
+    keyword as search_role,
+    job_title,
+
     job_posted_at_utc,
 
     job_country as country,

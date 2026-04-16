@@ -1,0 +1,22 @@
+# python
+venv/
+__pycache__/
+
+# data files and logs
+data/
+logs/
+
+# dbt generated
+job_tracker_dbt/target/
+job_tracker_dbt/dbt_packages/
+job_tracker_dbt/logs/
+
+# .env
+.env
+
+# git
+.git/
+.gitignore
+
+# Documentation Assets
+assets/

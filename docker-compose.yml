@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+    # 1. The PostgreSQL Data Warehouse (Room 1)
+    data_warehouse:
+        image: postgres:15-alpine
+        container_name: austrian_jobs_dw
+        environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        ports:
+            - '5433:5432'
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d ${DB_NAME}']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    # 2. The Python + dbt ETL Pipeline (Room 2)
+    etl_pipeline:
+        build: .
+        container_name: austrian_jobs_pipeline
+        env_file:
+            - .env
+        depends_on:
+            data_warehouse:
+                condition: service_healthy
+
+volumes:
+    pgdata:
